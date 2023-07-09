@@ -39,7 +39,7 @@ fn main() {
         }
         input = String::new(); //resets input string to blank
     }
-    let directory = format!("{}",input.trim()); //trims new line character
+    let directory = input.trim().to_string(); //trims new line character
     let logPath = format!("{}/output.json",directory); //path to output file
     let logCheck = Path::new(&logPath).exists(); //checks if output exists
     let files = Files{Files: vec![FileObj{Original: "0".to_string(), Renamed: "0".to_string()}]}; //sets up an dummy object to store json
@@ -67,7 +67,7 @@ fn main() {
         if input.trim() == "1"{
             let paths = fs::read_dir(directory.clone()).unwrap(); //reads directory for all file paths
             for path in paths {
-                    if metadata(path.as_ref().unwrap().path()).unwrap().is_dir() == false{ //if file path is not a directory
+                    if !metadata(path.as_ref().unwrap().path()).unwrap().is_dir(){ //if file path is not a directory
                         renameFile(path.unwrap(), directory.clone(), files);
                     }
                     
@@ -106,9 +106,13 @@ fn revertFiles(files : &mut Files, logPath : String){
         reverseFiles.push(files.Files[files.Files.len()-i-1].clone()); 
     }
     
-    for i in 0..reverseFiles.len(){
-        let _ = fs::rename(&reverseFiles[i].Renamed, &reverseFiles[i].Original); //renames the files in reverse order
-    }
+   // for i in 0..reverseFiles.len(){
+   //     let _ = fs::rename(&reverseFiles[i].Renamed, &reverseFiles[i].Original); //renames the files in reverse order
+   // }
+
+   for item in &reverseFiles{
+        let _ = fs::rename(&item.Renamed, &item.Original);
+   }
     
     let _ = fs::remove_file(logPath); //removes the output file
 
@@ -119,19 +123,18 @@ fn renameFile(filePath: DirEntry, directory: String, files : &mut Files){
     let originalFile = filePath.path().display().to_string(); //stores the path of the current file
 
     let extensionCheck = Path::new(&originalFile).extension().and_then(OsStr::to_str); //checks the extension of the file
-    let extension;
-
-    if extensionCheck == None{
-        extension = format!(""); //if file has no extension
+    let extension: String = if extensionCheck.is_none(){
+        String::new() //if file has no extension
     }else{
-        extension = format!(".{}",extensionCheck.unwrap()); //if file has extension 
-    }
+        format!(".{}",extensionCheck.unwrap()) //if file has extension 
+    };
+
     while renamePath{
         let i = rand::thread_rng().gen_range(1..=1000000);
         let newFile = format!("{directory}/{i}{}",&extension); //generates new file path
         renamePath = Path::new(&newFile).exists(); //checks if new file path exists
 
-        if renamePath == false && originalFile != format!("{}\\output.json", directory){ //if new file path doesnt exist and isnt the output file
+        if !renamePath && originalFile != format!("{}\\output.json", directory){ //if new file path doesnt exist and isnt the output file
             let _ =fs::rename(&originalFile, &newFile); //renames file
             let testOBJ =FileObj{ //creats object of original and renamed path
                 Original: originalFile.to_owned(), 
