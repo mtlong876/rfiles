@@ -27,7 +27,7 @@ struct FileObj{
 }
 
 fn main() {
-    //let mut choice = true;
+    
     let mut input = String::new();
     loop{
         println!("Enter a directory");
